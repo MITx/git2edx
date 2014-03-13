@@ -18,7 +18,11 @@
 import os, sys
 import time
 import requests
-from config import *
+
+try:
+    from config import *
+except:
+    pass
 
 class edxStudio(object):
 

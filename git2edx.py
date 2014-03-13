@@ -152,9 +152,9 @@ def do_git2edx(environ, start_response):
                 LOG('Current branch = "%s"' % branch)
 
                 # get current branch
-                cmd = "git reset --hard HEAD; git clean -f -d; git pull origin"
-                LOG(cmd)
-		LOG(os.popen(cmd).read())
+                #cmd = "git reset --hard HEAD; git clean -f -d; git pull origin"
+                #LOG(cmd)
+		#LOG(os.popen(cmd).read())
 
                 # get branch
                 cmd = "git reset --hard HEAD; git clean -f -d; git pull origin %s" % branch
