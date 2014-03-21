@@ -74,7 +74,9 @@ def upload_to_edx(rdir, repo):
     repo = repo name
     '''
     
-    # get course_id
+    site_url = "https://studio.edx.org"
+
+    # get course_id (and optional site_url)
     if not config['REPO2COURSE_MAP']:
         cxml = etree.parse(open('%s/course.xml' % rdir)).getroot()
         org = cxml.get('org')
@@ -82,7 +84,12 @@ def upload_to_edx(rdir, repo):
         sem = cxml.get('url_name')
         course_id = '/'.join([org, course, sem])
     else:
-        course_id = config['REPO2COURSE_MAP'].get(repo, '')
+        r2c = config['REPO2COURSE_MAP'].get(repo, '')
+        if isinstance(r2c, dict):
+            course_id = r2c['cid']
+            site_url = r2c['site']
+        else:
+            course_id = r2c
         
     if not course_id:
         LOG("Error: cannot determine course_id for repo=%s" % repo)
@@ -98,7 +105,7 @@ def upload_to_edx(rdir, repo):
     
     # upload to studio
     LOG('-'*30 + "Uploading %s to edX studio course_id=%s" % (tfn, course_id))
-    es = edxStudio(username=config['username'], password=config['password'])
+    es = edxStudio(username=config['username'], password=config['password'], base=site_url)
     es.do_upload(course_id, tfn, nwait=3)
 
 #-----------------------------------------------------------------------------
