@@ -75,6 +75,7 @@ def upload_to_edx(rdir, repo):
     '''
     
     site_url = "https://studio.edx.org"
+    r2c = {}
 
     # get course_id (and optional site_url)
     if not config['REPO2COURSE_MAP']:
@@ -95,6 +96,25 @@ def upload_to_edx(rdir, repo):
         LOG("Error: cannot determine course_id for repo=%s" % repo)
         return
     
+    # if branch specified check that out now
+    if 'branch' in r2c:
+        os.chdir(rdir)
+        cmd = 'git checkout %s; git pull' % r2c['branch']
+        LOG(cmd)
+        LOG(os.popen(cmd).read())
+
+    # if course.xml is overriden, do that now
+    oldxml = ''
+    if 'coursexml' in r2c:
+        os.chdir(rdir)
+        os.chdir('..')
+        oldxml = '%s/course.xml' % repo
+        tmpxml = '%s/course.xml.orig' % repo
+        newxml = '%s/%s' % (repo, r2c['coursexml'])
+        os.rename(oldxml, tmpxml)
+        LOG(os.popen("cp '%s' '%s'" % (newxml, oldxml)).read())
+        LOG("  Moving %s -> %s; %s -> %s" % (oldxml, tmpxml, newxml, oldxml))
+
     # create tar.gz file
     tfn = '%s.tar.gz' % rdir
     os.chdir(rdir)
@@ -103,6 +123,11 @@ def upload_to_edx(rdir, repo):
     LOG(cmd)
     LOG(os.popen(cmd).read())
     
+    # undo change of course.xml if that was done
+    if 'coursexml' in r2c:
+        os.rename(tmpxml, oldxml)
+        LOG("  Moving %s -> %s" % (tmpxml, oldxml))
+
     # upload to studio
     LOG('-'*30 + "Uploading %s to edX studio course_id=%s" % (tfn, course_id))
     es = edxStudio(username=config['username'], password=config['password'], base=site_url)
