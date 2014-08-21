@@ -85,6 +85,7 @@ class edxStudio(object):
 
         if not r2.ok or (r2.status_code==404):
             url = '%s/import/slashes:%s' % (self.BASE, course_id.replace('/','+'))
+            url = '%s/import/%s' % (self.BASE, course_id)
             mode = 2
             r2 = self.ses.get(url)
 
@@ -99,6 +100,7 @@ class edxStudio(object):
         url = '%s/import_status/%s/branch/draft/block/%s/%s' % (self.BASE, course_id.replace('/','.'), sem, tfnbn.replace('/','-'))
         if mode==2:
             url = '%s/import_status/slashes:%s/%s' % (self.BASE, course_id.replace('/','+'), tfnbn.replace('/','-'))
+            url = '%s/import/%s/%s' % (self.BASE, course_id, tfnbn.replace('/','-'))
         print url
     
         for k in range(nwait):
