@@ -66,31 +66,46 @@ def LOG(x):
 
 #-----------------------------------------------------------------------------
 
-def upload_to_edx(rdir, repo):
+def upload_to_edx(rdir, repo, r2c=None):
     '''
     tar up repo, and upload to edX
 
     rdir = directory with repo contents
     repo = repo name
+    r2c = repo-to-course config dict
+
+    Specifying an r2c is optional; if unspecified, then an r2c entry will be searched for,
+    in the config file.
+
+    An r2c entry may be provided in cases when one repo is chained to trigger loading of
+    one or more courses.
     '''
     
     site_url = "https://studio.edx.org"
-    r2c = {}
-
-    # get course_id (and optional site_url)
-    if not config['REPO2COURSE_MAP']:
-        cxml = etree.parse(open('%s/course.xml' % rdir)).getroot()
-        org = cxml.get('org')
-        course = cxml.get('course')
-        sem = cxml.get('url_name')
-        course_id = '/'.join([org, course, sem])
-    else:
-        r2c = config['REPO2COURSE_MAP'].get(repo, '')
-        if isinstance(r2c, dict):
-            course_id = r2c['cid']
-            site_url = r2c['site']
+    
+    if r2c is None:
+        
+        # get a r2c entry from scratch or just course_id from repo course.xml file
+        r2c = {}
+    
+        # get course_id (and optional site_url)
+        if not config['REPO2COURSE_MAP']:
+            cxml = etree.parse(open('%s/course.xml' % rdir)).getroot()
+            org = cxml.get('org')
+            course = cxml.get('course')
+            sem = cxml.get('url_name')
+            course_id = '/'.join([org, course, sem])
         else:
-            course_id = r2c
+            r2c = config['REPO2COURSE_MAP'].get(repo, '')
+            if isinstance(r2c, dict):
+                course_id = r2c['cid']
+                site_url = r2c['site']
+            else:
+                course_id = r2c
+
+    else:	# r2c already specified (it should be a dict)
+        course_id = r2c['cid']
+        site_url = r2c['site']
         
     if not course_id:
         LOG("Error: cannot determine course_id for repo=%s" % repo)
@@ -132,6 +147,12 @@ def upload_to_edx(rdir, repo):
     LOG('-'*30 + "Uploading %s to edX studio course_id=%s" % (tfn, course_id))
     es = edxStudio(username=config['username'], password=config['password'], base=site_url)
     es.do_upload(course_id, tfn, nwait=3)
+
+    # if there is a "chainto" entry, then call this procedure with the next chain link
+    chainto = r2c.get('chainto', '')
+    if chainto:
+        LOG('--> chainto triggering auto-load of %s' % chainto)
+        upload_to_edx(rdir, repo, config['REPO2COURSE_MAP'].get(chainto, None))
 
 #-----------------------------------------------------------------------------
 
