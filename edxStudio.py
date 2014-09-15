@@ -49,7 +49,8 @@ class edxStudio(object):
         print "Downloading tar.gz for %s" % (course_id)
     
         (org, num, sem) = course_id.split('/')
-        url = '%s/export/%s/branch/draft/block/%s?_accept=application/x-tgz' % (self.BASE, course_id.replace('/','.'), sem)
+        # url = '%s/export/%s/branch/draft/block/%s?_accept=application/x-tgz' % (self.BASE, course_id.replace('/','.'), sem)
+        url = '%s/export/%s?_accept=application/x-tgz' % (self.BASE, course_id)#.replace('/','.'))
         r3 = self.ses.get(url)
 
         if not r3.ok or (r3.status_code==404):
